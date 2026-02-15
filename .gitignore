@@ -1,0 +1,19 @@
+# Secrets
+.env
+*.env
+!.env.example
+
+# Credentials
+*.key
+*.pem
+secrets/
+ADMIN_TOKEN.txt
+
+# Database
+*.db
+*.sql.gz
+
+# IDE
+.vscode/
+.idea/
+.claude/
