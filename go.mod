@@ -1,6 +1,6 @@
 module github.com/Goga74/platform2
 
-go 1.24
+go 1.23
 
 require (
 	github.com/2captcha/2captcha-go v1.1.10
