@@ -13,9 +13,17 @@ import (
 	"github.com/Goga74/platform2/internal/common/swagger"
 	"github.com/Goga74/platform2/projects/strike2"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+	// Load .env file FIRST
+	if err := godotenv.Load(); err != nil {
+		log.Println("Warning: No .env file found")
+	} else {
+		log.Println("Loaded .env file")
+	}
+
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
@@ -41,13 +49,8 @@ func main() {
 	swagger.RegisterRoutes(r)
 
 	// --- Project: Strike2 ---
-	s2, err := strike2.New(strike2.Config{
-		CaptchaAPIKey: cfg.Strike2CaptchaKey,
-		UpstreamProxy: cfg.Strike2UpstreamProxy,
-		Fingerprint:   cfg.Strike2Fingerprint,
-		ProxyToken:    cfg.Strike2ProxyToken,
-		Workers:       cfg.Strike2Workers,
-	})
+	s2Cfg := strike2.LoadConfig()
+	s2, err := strike2.New(s2Cfg)
 	if err != nil {
 		log.Fatalf("Failed to initialize Strike2: %v", err)
 	}

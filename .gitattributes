@@ -1,0 +1,15 @@
+# Auto detect text files
+* text=auto
+
+# Force LF for code files
+*.go text eol=lf
+*.sh text eol=lf
+*.md text eol=lf
+Dockerfile text eol=lf
+Makefile text eol=lf
+
+# Vendor - no conversion
+vendor/** -text
+
+# Binary files
+*.exe binary

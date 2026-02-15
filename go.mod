@@ -5,8 +5,9 @@ go 1.23
 require (
 	github.com/2captcha/2captcha-go v1.1.10
 	github.com/gin-gonic/gin v1.11.0
+	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.11.2
-	github.com/refraction-networking/utls v1.8.2
+	github.com/refraction-networking/utls v1.6.7
 	golang.org/x/net v0.42.0
 )
 
@@ -14,6 +15,7 @@ require (
 	github.com/andybalholm/brotli v1.0.6 // indirect
 	github.com/bytedance/sonic v1.14.0 // indirect
 	github.com/bytedance/sonic/loader v0.3.0 // indirect
+	github.com/cloudflare/circl v1.3.7 // indirect
 	github.com/cloudwego/base64x v0.1.6 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.8 // indirect
 	github.com/gin-contrib/sse v1.1.0 // indirect

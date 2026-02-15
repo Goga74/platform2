@@ -7,9 +7,9 @@ services:
       PORT: 8080
       WORKERS: 500
       FINGERPRINT: chrome
-      CAPTCHA_API_KEY: ${CAPTCHA_API_KEY:-}
-      PROXY_TOKEN: ${PROXY_TOKEN:-}
-      UPSTREAM_PROXY: ${UPSTREAM_PROXY:-}
+      STRIKE2_CAPTCHA_KEY: ${STRIKE2_CAPTCHA_KEY:-}
+      STRIKE2_PROXY_TOKEN: ${STRIKE2_PROXY_TOKEN:-}
+      STRIKE2_UPSTREAM_PROXY: ${STRIKE2_UPSTREAM_PROXY:-}
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
       interval: 30s

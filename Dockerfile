@@ -4,12 +4,11 @@ RUN apk add --no-cache git ca-certificates
 
 WORKDIR /build
 
-COPY go.mod go.sum ./
-RUN go mod download
-
+# Копировать всё сразу (включая vendor)
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /build/platform cmd/server/main.go
+# Билд с vendor (без go mod download)
+RUN CGO_ENABLED=0 GOOS=linux go build -mod=vendor -ldflags="-s -w" -o /build/platform cmd/server/main.go
 
 FROM alpine:3.19
 

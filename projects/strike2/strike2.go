@@ -21,10 +21,10 @@ type Strike2 struct {
 
 // Config holds Strike2 initialization parameters
 type Config struct {
-	CaptchaAPIKey string
+	ProxyToken    string
+	CaptchaKey    string
 	UpstreamProxy string
 	Fingerprint   string
-	ProxyToken    string
 	Workers       int
 }
 
@@ -44,15 +44,15 @@ func New(cfg Config) (*Strike2, error) {
 		s.simpleAuth = auth.NewSimpleAuth(cfg.ProxyToken)
 		log.Printf("[Strike2] Proxy authentication: ENABLED")
 	} else {
-		log.Printf("[Strike2] Proxy authentication: DISABLED (no PROXY_TOKEN set)")
+		log.Printf("[Strike2] Proxy authentication: DISABLED (no STRIKE2_PROXY_TOKEN set)")
 	}
 
 	// Initialize captcha solver
-	if cfg.CaptchaAPIKey != "" {
-		s.captchaSolver = captcha.NewSolver(cfg.CaptchaAPIKey)
+	if cfg.CaptchaKey != "" {
+		s.captchaSolver = captcha.NewSolver(cfg.CaptchaKey)
 		log.Printf("[Strike2] 2Captcha integration: ENABLED")
 	} else {
-		log.Printf("[Strike2] 2Captcha integration: DISABLED (no API key)")
+		log.Printf("[Strike2] 2Captcha integration: DISABLED (no STRIKE2_CAPTCHA_KEY set)")
 	}
 
 	// Initialize proxy handler
