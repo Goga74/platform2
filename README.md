@@ -1,3 +1,11 @@
+## Environment Variables - CRITICAL
+
+**DO NOT RENAME existing variables!**
+
+Strike2 production variables (LOCKED):
+- `STRIKE2_PROXY_TOKEN`
+- `STRIKE2_CAPTCHA_KEY`
+
 # Platform2
 
 Multi-project Go backend platform. Each project lives in `projects/` with shared infrastructure.
