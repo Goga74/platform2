@@ -1,0 +1,83 @@
+openapi: "3.0.3"
+info:
+  title: Platform2 API
+  description: Multi-project Go backend platform
+  version: "1.0.0"
+  contact:
+    name: Platform2
+    url: https://github.com/Goga74/platform2
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+  - url: https://platform2.example.com
+    description: Production
+
+tags:
+  - name: platform
+    description: Platform-level endpoints
+  - name: strike2
+    description: Strike2 project endpoints
+
+paths:
+  /health:
+    get:
+      tags: [platform]
+      summary: Platform health check
+      operationId: platformHealth
+      responses:
+        "200":
+          description: Platform is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+        "503":
+          description: Platform is unhealthy
+
+  /api/strike2/health:
+    get:
+      tags: [strike2]
+      summary: Strike2 project health check
+      operationId: strike2Health
+      responses:
+        "200":
+          description: Strike2 is healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProjectHealthResponse"
+        "503":
+          description: Strike2 is unhealthy
+
+components:
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: healthy
+        platform:
+          type: string
+          example: platform2
+
+    ProjectHealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          example: healthy
+        project:
+          type: string
+          example: strike2
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key

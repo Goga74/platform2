@@ -1,3 +1,7 @@
+# Binaries
+bin/
+*.exe
+
 # Secrets
 .env
 *.env

@@ -1,0 +1,11 @@
+services:
+  platform:
+    build: .
+    ports:
+      - "${PORT:-8080}:${PORT:-8080}"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      PORT: ${PORT:-8080}
+      STRIKE2_CAPTCHA_KEY: ${STRIKE2_CAPTCHA_KEY}
+      STRIKE2_PROXY_TOKEN: ${STRIKE2_PROXY_TOKEN}
+    restart: unless-stopped
