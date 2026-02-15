@@ -57,7 +57,7 @@ curl -X POST http://localhost:8075/api/strike2/fetch \
 ```bash
 # 1. Copy environment file
 cp .env.example .env
-# Edit .env — set PROXY_TOKEN at minimum
+# Edit .env — set STRIKE2_PROXY_TOKEN at minimum
 
 # 2. Start with Docker
 docker-compose up -d
@@ -72,7 +72,7 @@ curl -x http://user:YOUR_TOKEN@localhost:8075 https://httpbin.org/ip
 
 ```bash
 # Requires Go 1.23+
-export PROXY_TOKEN=your_token_here
+export STRIKE2_PROXY_TOKEN=your_token_here
 make run
 ```
 
@@ -106,7 +106,7 @@ make run
 
 ## Authentication
 
-Strike2 uses Simple Auth — a single `PROXY_TOKEN` environment variable.
+Strike2 uses Simple Auth — a single `STRIKE2_PROXY_TOKEN` environment variable.
 
 **Proxy requests** require `Proxy-Authorization: Basic base64(user:token)` header. The username is ignored; only the token is validated.
 
@@ -116,9 +116,9 @@ Strike2 uses Simple Auth — a single `PROXY_TOKEN` environment variable.
 
 | Variable | Default | Description |
 |---|---|---|
-| `PORT` | `8080` | Internal server port |
-| `PROXY_TOKEN` | — | Token for proxy authentication |
-| `CAPTCHA_API_KEY` | — | 2Captcha API key (optional) |
+| `PORT` | `8075` | External server port (8080 inside container) |
+| `STRIKE2_PROXY_TOKEN` | — | Token for proxy authentication |
+| `STRIKE2_CAPTCHA_KEY` | — | 2Captcha API key (optional) |
 | `UPSTREAM_PROXY` | — | Upstream proxy URL (optional) |
 | `FINGERPRINT` | `chrome` | Default browser fingerprint |
 | `WORKERS` | `500` | Worker pool size |
