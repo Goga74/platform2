@@ -1,11 +1,15 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/Goga74/platform2/internal/common/config"
-	"github.com/Goga74/platform2/internal/common/database"
 	"github.com/Goga74/platform2/internal/common/swagger"
 	"github.com/Goga74/platform2/projects/strike2"
 	"github.com/gin-gonic/gin"
@@ -17,23 +21,16 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	db, err := database.Connect(cfg.DatabaseURL)
-	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
-	}
-	defer db.Close()
+	log.Printf("Platform2 - Multi-project backend")
 
-	r := gin.Default()
+	// Initialize Gin router
+	gin.SetMode(gin.ReleaseMode)
+	r := gin.New()
+	r.Use(gin.Recovery())
+	r.Use(gin.Logger())
 
-	// Global health check
+	// Platform health check
 	r.GET("/health", func(c *gin.Context) {
-		if err := db.Ping(); err != nil {
-			c.JSON(http.StatusServiceUnavailable, gin.H{
-				"status": "unhealthy",
-				"error":  "database unreachable",
-			})
-			return
-		}
 		c.JSON(http.StatusOK, gin.H{
 			"status":   "healthy",
 			"platform": "platform2",
@@ -43,16 +40,62 @@ func main() {
 	// Swagger documentation
 	swagger.RegisterRoutes(r)
 
-	// Project: Strike2
+	// --- Project: Strike2 ---
+	s2, err := strike2.New(strike2.Config{
+		CaptchaAPIKey: cfg.Strike2CaptchaKey,
+		UpstreamProxy: cfg.Strike2UpstreamProxy,
+		Fingerprint:   cfg.Strike2Fingerprint,
+		ProxyToken:    cfg.Strike2ProxyToken,
+		Workers:       cfg.Strike2Workers,
+	})
+	if err != nil {
+		log.Fatalf("Failed to initialize Strike2: %v", err)
+	}
+
+	// Register Strike2 API routes
 	strike2Group := r.Group("/api/strike2")
-	strike2.RegisterRoutes(strike2Group, db)
+	s2.RegisterRoutes(strike2Group)
 
 	// Future projects:
 	// scraperGroup := r.Group("/api/scraper")
-	// scraper.RegisterRoutes(scraperGroup, db)
+	// scraper.RegisterRoutes(scraperGroup)
 
-	log.Printf("Platform2 starting on port %s", cfg.Port)
-	if err := r.Run(":" + cfg.Port); err != nil {
-		log.Fatalf("Failed to start server: %v", err)
+	// Wrap gin router with Strike2's combined handler (proxy + API)
+	handler := s2.WrapHandler(r)
+
+	// Create HTTP server
+	srv := &http.Server{
+		Addr:         ":" + cfg.Port,
+		Handler:      handler,
+		ReadTimeout:  30 * time.Second,
+		WriteTimeout: 120 * time.Second,
+		IdleTimeout:  60 * time.Second,
 	}
+
+	// Start server
+	go func() {
+		log.Printf("Platform2 listening on http://0.0.0.0:%s", cfg.Port)
+		log.Printf("Strike2 proxy mode: Use this server as HTTP/HTTPS proxy")
+		log.Printf("Strike2 API: http://0.0.0.0:%s/api/strike2/", cfg.Port)
+		log.Printf("Swagger: http://0.0.0.0:%s/swagger", cfg.Port)
+		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			log.Fatalf("Server error: %v", err)
+		}
+	}()
+
+	// Wait for interrupt signal
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("Shutting down server...")
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		log.Printf("Server forced to shutdown: %v", err)
+	}
+
+	log.Println("Server stopped")
 }

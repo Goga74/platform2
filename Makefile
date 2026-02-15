@@ -1,4 +1,4 @@
-.PHONY: build run test docker-build docker-up docker-prod migrate swagger
+.PHONY: build run test docker-build docker-up docker-prod
 
 build:
 	go build -o bin/platform cmd/server/main.go
@@ -17,9 +17,3 @@ docker-up:
 
 docker-prod:
 	docker-compose -f docker-compose.prod.yml up -d
-
-migrate:
-	psql $(DATABASE_URL) -f projects/strike2/migrations/001_initial.sql
-
-swagger:
-	swag init -g cmd/server/main.go

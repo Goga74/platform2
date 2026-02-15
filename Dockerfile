@@ -13,12 +13,16 @@ RUN CGO_ENABLED=0 GOOS=linux go build -ldflags="-s -w" -o /build/platform cmd/se
 
 FROM alpine:3.19
 
-RUN apk add --no-cache ca-certificates tzdata
+RUN apk add --no-cache ca-certificates tzdata wget
+
+RUN adduser -D -g '' appuser
 
 WORKDIR /app
 
 COPY --from=builder /build/platform .
 COPY --from=builder /build/api/ ./api/
+
+USER appuser
 
 EXPOSE 8080
 

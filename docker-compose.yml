@@ -1,32 +1,23 @@
 services:
-  postgres:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: platform_db
-      POSTGRES_USER: platform
-      POSTGRES_PASSWORD: platform_dev
-    ports:
-      - "5432:5432"
-    volumes:
-      - pgdata:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U platform -d platform_db"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
-
   platform:
     build: .
     ports:
-      - "${PORT:-8080}:${PORT:-8080}"
+      - "8075:8080"
     environment:
-      DATABASE_URL: postgresql://platform:platform_dev@postgres:5432/platform_db?sslmode=disable
-      PORT: ${PORT:-8080}
-      STRIKE2_CAPTCHA_KEY: ${STRIKE2_CAPTCHA_KEY:-}
-      STRIKE2_PROXY_TOKEN: ${STRIKE2_PROXY_TOKEN:-}
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-volumes:
-  pgdata:
+      PORT: 8080
+      WORKERS: 500
+      FINGERPRINT: chrome
+      CAPTCHA_API_KEY: ${CAPTCHA_API_KEY:-}
+      PROXY_TOKEN: ${PROXY_TOKEN:-}
+      UPSTREAM_PROXY: ${UPSTREAM_PROXY:-}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 1G

@@ -1,23 +1,25 @@
 openapi: "3.0.3"
 info:
   title: Platform2 API
-  description: Multi-project Go backend platform
+  description: Multi-project Go backend platform with Strike2 proxy service
   version: "1.0.0"
   contact:
     name: Platform2
     url: https://github.com/Goga74/platform2
 
 servers:
+  - url: http://localhost:8075
+    description: Local development (exposed port)
   - url: http://localhost:8080
-    description: Local development
-  - url: https://platform2.example.com
-    description: Production
+    description: Internal container port
 
 tags:
   - name: platform
     description: Platform-level endpoints
   - name: strike2
-    description: Strike2 project endpoints
+    description: Strike2 proxy & scraping service
+  - name: strike2-captcha
+    description: Strike2 captcha solving
 
 paths:
   /health:
@@ -31,14 +33,19 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/HealthResponse"
-        "503":
-          description: Platform is unhealthy
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  platform:
+                    type: string
+                    example: platform2
 
   /api/strike2/health:
     get:
       tags: [strike2]
-      summary: Strike2 project health check
+      summary: Strike2 service health check
       operationId: strike2Health
       responses:
         "200":
@@ -46,38 +53,228 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ProjectHealthResponse"
-        "503":
-          description: Strike2 is unhealthy
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  service:
+                    type: string
+                    example: strike2
+                  proxy_enabled:
+                    type: boolean
+                  auth_enabled:
+                    type: boolean
+                  captcha_enabled:
+                    type: boolean
+
+  /api/strike2/fetch:
+    post:
+      tags: [strike2]
+      summary: Fetch a single URL with JA3 fingerprint spoofing
+      operationId: strike2Fetch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FetchRequest"
+      responses:
+        "200":
+          description: Fetch result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FetchResponse"
+
+  /api/strike2/v1/fetch:
+    post:
+      tags: [strike2]
+      summary: Fetch a single URL (v1)
+      operationId: strike2FetchV1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FetchRequest"
+      responses:
+        "200":
+          description: Fetch result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FetchResponse"
+
+  /api/strike2/v1/batch:
+    post:
+      tags: [strike2]
+      summary: Fetch multiple URLs concurrently (max 100)
+      operationId: strike2Batch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/BatchRequest"
+      responses:
+        "200":
+          description: Batch results
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BatchResponse"
+
+  /api/strike2/v1/fingerprints:
+    get:
+      tags: [strike2]
+      summary: List available browser fingerprints
+      operationId: strike2Fingerprints
+      responses:
+        "200":
+          description: Available fingerprints
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  fingerprints:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          example: Chrome
+                        user_agent:
+                          type: string
+
+  /api/strike2/v1/captcha/solve/amazon-waf:
+    post:
+      tags: [strike2-captcha]
+      summary: Solve Amazon WAF captcha via 2Captcha
+      operationId: strike2SolveAmazonWAF
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AmazonWAFRequest"
+      responses:
+        "200":
+          description: Captcha solution
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  token:
+                    type: string
+                  solved_in_ms:
+                    type: integer
+                  cost:
+                    type: string
+
+  /api/strike2/v1/captcha/balance:
+    get:
+      tags: [strike2-captcha]
+      summary: Get 2Captcha account balance
+      operationId: strike2CaptchaBalance
+      responses:
+        "200":
+          description: Account balance
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  balance:
+                    type: number
+                  currency:
+                    type: string
+                    example: USD
 
 components:
   schemas:
-    HealthResponse:
+    FetchRequest:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
+          example: https://httpbin.org/ip
+        fingerprint:
+          type: string
+          enum: [chrome, firefox, safari]
+          example: chrome
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+        method:
+          type: string
+          enum: [GET, POST, PUT, DELETE]
+          default: GET
+        body:
+          type: string
+
+    FetchResponse:
       type: object
       properties:
-        status:
+        url:
           type: string
-          example: healthy
-        platform:
+        status_code:
+          type: integer
+        headers:
+          type: object
+          additionalProperties:
+            type: string
+        body:
           type: string
-          example: platform2
+        error:
+          type: string
+        duration_ms:
+          type: integer
 
-    ProjectHealthResponse:
+    BatchRequest:
+      type: object
+      required: [requests]
+      properties:
+        requests:
+          type: array
+          maxItems: 100
+          items:
+            $ref: "#/components/schemas/FetchRequest"
+
+    BatchResponse:
       type: object
       properties:
-        status:
-          type: string
-          example: healthy
-        project:
-          type: string
-          example: strike2
+        results:
+          type: array
+          items:
+            $ref: "#/components/schemas/FetchResponse"
+        total:
+          type: integer
+        success:
+          type: integer
+        failed:
+          type: integer
 
-  securitySchemes:
-    BearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-    ApiKeyAuth:
-      type: apiKey
-      in: header
-      name: X-API-Key
+    AmazonWAFRequest:
+      type: object
+      required: [sitekey, url]
+      properties:
+        sitekey:
+          type: string
+        url:
+          type: string
+        iv:
+          type: string
+        context:
+          type: string
+        challenge_script:
+          type: string
+        captcha_script:
+          type: string
